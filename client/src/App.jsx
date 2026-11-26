@@ -1,38 +1,57 @@
-import { useEffect,useState } from "react";
-import API from "./services/api"
 
-function App(){
-  const[message,setMessage] = useState("")
-  const[loading , setLoading]=useState(true)
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
-  useEffect(()=>{
-    const fetchBackend=async()=>{
-      try{
-        const response=await API.get("/")
-        setMessage(response.data);
-      }
-      catch(error){
-        console.error("backend connection failed",error)
-        setMessage("Backend connection failed")
-      }finally{
-        setLoading(false)
-      }
-    }
-    fetchBackend()
-  },[]);
+import { AuthProvider } from "./context/AuthContext";
 
-  return(
-    <div className="min-h-screen flex iteam-centre justify-centre bg-slate-100">
-      <div className="bg-white p-10 rounded-2x1 shadow-lg text-centre">
-        <h1 className="text-2xl font-bold text-blue-900">
-          Ideamagix CRM
-        </h1>
-        <p className="mt-4 text-gray-600">
-          { loading? "connecting..." : message}
-        </p>
-      </div>
-    </div>
-  )
+import ProtectedRoute from "./components/ProtectedRoute";
+import DashboardLayout from "./components/DashboardLayout";
+
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Leads from "./pages/Leads";
+import LeadDetails from "./pages/LeadDetails";
+import Users from "./pages/Users";
+
+// Main application
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+
+          {/* Public Route */}
+          <Route path="/" element={<Login />} />
+
+          {/* Protected Routes */}
+          <Route
+            element={
+              <ProtectedRoute>
+                <DashboardLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="/dashboard" element={<Dashboard />} />
+
+            <Route path="/leads" element={<Leads />} />
+          </Route>
+          <Route path="/leads/:id" element={<LeadDetails />} />
+          <Route path="/users" element={<Users />} />
+
+          {/* Redirect unknown routes */}
+          <Route
+            path="*"
+            element={<Navigate to="/dashboard" replace />}
+          />
+
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
 }
 
-export default App
+export default App;
