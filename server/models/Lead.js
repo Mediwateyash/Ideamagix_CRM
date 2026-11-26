@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 const leadSchema = new mongoose.Schema(
     {
-      
+        // Customer information
         name: {
             type: String,
             required: true,
@@ -12,8 +12,8 @@ const leadSchema = new mongoose.Schema(
 
         email: {
             type: String,
-            trim: true,
-            lowercase: true
+            lowercase: true,
+            trim: true
         },
 
         phone: {
@@ -22,24 +22,35 @@ const leadSchema = new mongoose.Schema(
             trim: true
         },
 
-    
+        // Lead source
         source: {
             type: String,
-            default: "Manual"
+            default: "Manual",
+            trim: true
         },
 
+        // Lead status
         status: {
             type: String,
             enum: ["New", "Contacted", "Qualified", "Lost", "Won"],
             default: "New"
         },
 
+        // Assigned support agent
         assignedTo: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
             default: null
         },
 
+        // User who created the lead
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
+
+        // Lead tags
         tags: [
             {
                 type: mongoose.Schema.Types.ObjectId,
@@ -47,11 +58,13 @@ const leadSchema = new mongoose.Schema(
             }
         ],
 
+        // Notes and comments
         notes: [
             {
                 comment: {
                     type: String,
-                    required: true
+                    required: true,
+                    trim: true
                 },
 
                 addedBy: {
