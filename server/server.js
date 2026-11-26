@@ -7,6 +7,7 @@ const userRoutes = require("./routes/userRoutes");
 const leadRoutes = require("./routes/leadRoutes");
 const tagRoutes = require("./routes/tagRoutes");
 const excelRoutes = require("./routes/excelRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 
 
@@ -19,6 +20,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/leads", leadRoutes);
 app.use("/api/tags", tagRoutes);
 app.use("/api/excel", excelRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 
 app.get("/" , (req, res) => {
