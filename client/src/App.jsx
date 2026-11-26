@@ -16,6 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import LeadDetails from "./pages/LeadDetails";
 import Users from "./pages/Users";
+import Excel from "./pages/Excel";
 
 // Main application
 function App() {
@@ -36,7 +37,7 @@ function App() {
             }
           >
             <Route path="/dashboard" element={<Dashboard />} />
-
+<Route path="/excel" element={<Excel />} />
             <Route path="/leads" element={<Leads />} />
           </Route>
           <Route path="/leads/:id" element={<LeadDetails />} />
