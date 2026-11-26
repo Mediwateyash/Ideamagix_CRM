@@ -13,6 +13,30 @@ function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  const demoAccounts = [
+    {
+      role: "Super Admin",
+      email: "admin@example.com",
+      password: "admin@123",
+    },
+    {
+      role: "Sub Admin",
+      email: "subadmin@example.com",
+      password: "subadmin@123",
+    },
+    {
+      role: "Support Agent",
+      email: "sales@support.com",
+      password: "support@123",
+    },
+  ];
+
+  const handleDemoFill = (account) => {
+    setEmail(account.email);
+    setPassword(account.password);
+    setError("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -71,6 +95,40 @@ function Login() {
         >
           {loading ? "Logging in..." : "Login"}
         </button>
+
+        {/* Demo Credentials */}
+        <div className="mt-6 border-t pt-4">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">
+            Demo Credentials
+          </h2>
+
+          {demoAccounts.map((account) => (
+            <div
+              key={account.role}
+              className="flex items-center justify-between gap-2 py-2 border-b last:border-b-0 text-xs"
+            >
+              <div>
+                <p className="font-semibold text-gray-700">
+                  {account.role}
+                </p>
+                <p className="text-gray-500">{account.email}</p>
+                <p className="text-gray-500">{account.password}</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleDemoFill(account)}
+                className="text-blue-600 hover:underline whitespace-nowrap"
+              >
+                Click here to fill
+              </button>
+            </div>
+          ))}
+
+          <p className="text-xs text-gray-400 mt-3">
+            For testing and evaluation purposes only.
+          </p>
+        </div>
       </form>
     </div>
   );
