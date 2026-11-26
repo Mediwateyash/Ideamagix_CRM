@@ -17,7 +17,7 @@ import Leads from "./pages/Leads";
 import LeadDetails from "./pages/LeadDetails";
 import Users from "./pages/Users";
 import Excel from "./pages/Excel";
-
+import Tags from "./pages/Tags";
 // Main application
 function App() {
   return (
@@ -42,7 +42,7 @@ function App() {
           </Route>
           <Route path="/leads/:id" element={<LeadDetails />} />
           <Route path="/users" element={<Users />} />
-
+<Route path="/tags" element={<Tags />} />
           {/* Redirect unknown routes */}
           <Route
             path="*"

@@ -15,6 +15,7 @@ function Leads() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [assigningId, setAssigningId] = useState(null);
 
   const isAdmin = ["super_admin", "sub_admin"].includes(user?.role);
 
@@ -27,7 +28,6 @@ function Leads() {
     assignedTo: "",
   });
 
-  // Fetch leads
   const fetchLeads = async () => {
     try {
       setLoading(true);
@@ -46,7 +46,6 @@ function Leads() {
     }
   };
 
-  // Fetch support agents
   const fetchAgents = async () => {
     if (!isAdmin) return;
 
@@ -73,7 +72,6 @@ function Leads() {
     fetchAgents();
   }, [user?.role]);
 
-  // Form input handler
   const handleChange = (e) => {
     setForm({
       ...form,
@@ -81,7 +79,6 @@ function Leads() {
     });
   };
 
-  // Create lead
   const handleCreate = async (e) => {
     e.preventDefault();
 
@@ -106,13 +103,32 @@ function Leads() {
       });
 
       setShowForm(false);
-      fetchLeads();
+      await fetchLeads();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create lead");
     }
   };
 
-  // Delete lead
+  // Assign or reassign lead
+  const handleAssignment = async (leadId, agentId) => {
+    try {
+      setError("");
+      setAssigningId(leadId);
+
+      await API.put(`/leads/${leadId}`, {
+        assignedTo: agentId || null,
+      });
+
+      await fetchLeads();
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to assign lead"
+      );
+    } finally {
+      setAssigningId(null);
+    }
+  };
+
   const handleDelete = async (id) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this lead?"
@@ -122,7 +138,7 @@ function Leads() {
 
     try {
       await API.delete(`/leads/${id}`);
-      fetchLeads();
+      await fetchLeads();
     } catch (err) {
       setError(err.response?.data?.message || "Failed to delete lead");
     }
@@ -130,11 +146,8 @@ function Leads() {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
-        <h1 className="text-2xl font-semibold">
-          Leads Management
-        </h1>
+        <h1 className="text-2xl font-semibold">Leads Management</h1>
 
         {isAdmin && (
           <button
@@ -146,14 +159,12 @@ function Leads() {
         )}
       </div>
 
-      {/* Error */}
       {error && (
         <p className="bg-red-100 text-red-700 p-3 rounded mb-4">
           {error}
         </p>
       )}
 
-      {/* Add Lead Form */}
       {showForm && isAdmin && (
         <form
           onSubmit={handleCreate}
@@ -207,9 +218,7 @@ function Leads() {
             >
               {["New", "Contacted", "Qualified", "Lost", "Won"].map(
                 (s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
+                  <option key={s} value={s}>{s}</option>
                 )
               )}
             </select>
@@ -221,7 +230,6 @@ function Leads() {
               className="border rounded p-2"
             >
               <option value="">Unassigned</option>
-
               {agents.map((agent) => (
                 <option key={agent._id} value={agent._id}>
                   {agent.name} ({agent.email})
@@ -239,7 +247,6 @@ function Leads() {
         </form>
       )}
 
-      {/* Search and Filter */}
       <div className="flex flex-wrap gap-3 mb-4">
         <input
           type="text"
@@ -255,25 +262,19 @@ function Leads() {
           className="border rounded p-2"
         >
           <option value="">All Statuses</option>
-
           {["New", "Contacted", "Qualified", "Lost", "Won"].map(
             (s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
+              <option key={s} value={s}>{s}</option>
             )
           )}
         </select>
       </div>
 
-      {/* Leads Table */}
       <div className="bg-white border rounded overflow-x-auto">
         {loading ? (
           <p className="p-5">Loading leads...</p>
         ) : leads.length === 0 ? (
-          <p className="p-5 text-gray-500">
-            No leads found.
-          </p>
+          <p className="p-5 text-gray-500">No leads found.</p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead className="bg-gray-100">
@@ -284,6 +285,7 @@ function Leads() {
                 <th className="p-3">Source</th>
                 <th className="p-3">Status</th>
                 <th className="p-3">Assigned To</th>
+                <th className="p-3">Tags</th>
                 <th className="p-3">Action</th>
               </tr>
             </thead>
@@ -291,35 +293,63 @@ function Leads() {
             <tbody>
               {leads.map((lead) => (
                 <tr key={lead._id} className="border-t">
-                  <td className="p-3 font-medium">
-                    {lead.name}
+                  <td className="p-3 font-medium">{lead.name}</td>
+                  <td className="p-3">{lead.email || "-"}</td>
+                  <td className="p-3">{lead.phone}</td>
+                  <td className="p-3">{lead.source || "-"}</td>
+                  <td className="p-3">{lead.status}</td>
+
+                  <td className="p-3">
+                    {isAdmin ? (
+                      <select
+                        value={lead.assignedTo?._id || ""}
+                        disabled={assigningId === lead._id}
+                        onChange={(e) =>
+                          handleAssignment(lead._id, e.target.value)
+                        }
+                        className="border rounded p-2 min-w-36 disabled:opacity-50"
+                      >
+                        <option value="">Unassigned</option>
+                        {agents.map((agent) => (
+                          <option key={agent._id} value={agent._id}>
+                            {agent.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      lead.assignedTo?.name || "Unassigned"
+                    )}
+                    {assigningId === lead._id && (
+                      <span className="block text-xs text-gray-500 mt-1">
+                        Updating...
+                      </span>
+                    )}
                   </td>
 
                   <td className="p-3">
-                    {lead.email || "-"}
-                  </td>
-
-                  <td className="p-3">
-                    {lead.phone}
-                  </td>
-
-                  <td className="p-3">
-                    {lead.source || "-"}
-                  </td>
-
-                  <td className="p-3">
-                    {lead.status}
-                  </td>
-
-                  <td className="p-3">
-                    {lead.assignedTo?.name || "Unassigned"}
+                    <div className="flex flex-wrap gap-1">
+                      {lead.tags?.length > 0 ? (
+                        lead.tags.map((tag) => (
+                          <span
+                            key={tag._id}
+                            className="rounded-full px-2 py-1 text-xs font-medium"
+                            style={{
+                              backgroundColor: `${tag.color}20`,
+                              color: tag.color,
+                            }}
+                          >
+                            {tag.name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400">No tags</span>
+                      )}
+                    </div>
                   </td>
 
                   <td className="p-3 whitespace-nowrap">
                     <button
-                      onClick={() =>
-                        navigate(`/leads/${lead._id}`)
-                      }
+                      onClick={() => navigate(`/leads/${lead._id}`)}
                       className="text-blue-600 hover:underline mr-3"
                     >
                       View / Edit
