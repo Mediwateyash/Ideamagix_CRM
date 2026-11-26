@@ -65,15 +65,40 @@ const createLead = async (req, res) => {
     }
 };
 
-// GET ALL LEADS (role-based)
 const getLeads = async (req, res) => {
     try {
+        const { search, status, source, assignedTo } = req.query;
+
         const filter = {};
 
+        // Agents can only see their assigned leads
         if (req.user.role === "support_agent") {
             filter.assignedTo = req.user._id;
         } else if (!adminRoles.includes(req.user.role)) {
-            return res.status(403).json({ message: "Access denied" });
+            return res.status(403).json({
+                message: "Access denied"
+            });
+        } else if (assignedTo) {
+            filter.assignedTo = assignedTo;
+        }
+
+        // Search by name, email or phone
+        if (search) {
+            filter.$or = [
+                { name: { $regex: search, $options: "i" } },
+                { email: { $regex: search, $options: "i" } },
+                { phone: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        // Filter by status
+        if (status) {
+            filter.status = status;
+        }
+
+        // Filter by source
+        if (source) {
+            filter.source = source;
         }
 
         const leads = await Lead.find(filter)
@@ -236,10 +261,70 @@ const deleteLead = async (req, res) => {
     }
 };
 
+
+const addLeadNote = async (req, res) => {
+    try {
+        const { comment } = req.body;
+
+        if (!comment || !comment.trim()) {
+            return res.status(400).json({
+                message: "Comment is required"
+            });
+        }
+
+        const lead = await Lead.findById(req.params.id);
+
+        if (!lead) {
+            return res.status(404).json({
+                message: "Lead not found"
+            });
+        }
+
+        const isAdmin = adminRoles.includes(req.user.role);
+
+        const isAssignedAgent =
+            req.user.role === "support_agent" &&
+            String(lead.assignedTo) === String(req.user._id);
+
+        if (!isAdmin && !isAssignedAgent) {
+            return res.status(403).json({
+                message: "Access denied"
+            });
+        }
+
+        lead.notes.push({
+            comment: comment.trim(),
+            addedBy: req.user._id
+        });
+
+        await lead.save();
+
+        await Activity.create({
+            user: req.user._id,
+            action: "ADD_LEAD_NOTE",
+            description: `Added a note to lead: ${lead.name}`,
+            lead: lead._id
+        });
+
+        res.status(201).json({
+            message: "Note added successfully",
+            notes: lead.notes
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Server error",
+            error: error.message
+        });
+    }
+};
+
+
 module.exports = {
     createLead,
     getLeads,
     getLeadById,
     updateLead,
-    deleteLead
+    deleteLead,
+    addLeadNote
 };

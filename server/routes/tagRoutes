@@ -1,0 +1,23 @@
+
+const express = require("express");
+const router = express.Router();
+
+const { createTag, getTags } = require("../controllers/tagController");
+const { protect } = require("../middleware/authMiddleware");
+const { authorizeRoles } = require("../middleware/roleMiddleware");
+
+router.use(protect);
+
+router.get(
+    "/",
+    authorizeRoles("super_admin", "sub_admin", "support_agent"),
+    getTags
+);
+
+router.post(
+    "/",
+    authorizeRoles("super_admin", "sub_admin"),
+    createTag
+);
+
+module.exports = router;

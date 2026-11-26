@@ -5,6 +5,7 @@ const connectDB = require("./config/db")
 const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const leadRoutes = require("./routes/leadRoutes");
+const tagRoutes = require("./routes/tagRoutes");
 
 
 const app = express()
@@ -14,6 +15,8 @@ app.use(express.json())
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/leads", leadRoutes);
+app.use("/api/tags", tagRoutes);
+
 
 app.get("/" , (req, res) => {
     res.send("Backend is running");
